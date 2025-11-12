@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mrz_scanner_plus/src/mrz_parser/mrz_parser.dart';
 import 'package:mrz_scanner_plus/src/mrz_parser/mrz_result.dart';
+import 'package:mrz_scanner_plus/src/mrz_postprocess.dart';
 
 class MRZHelper {
   static List<String>? getFinalListToParse(List<String> ableToScanTextList) {
@@ -52,15 +53,19 @@ class MRZHelper {
     // to check if the text belongs to any MRZ format or not
 
     if (list.length != 44 && list.length != 30 && list.length != 36) {
-      return (text.contains('<') && text.replaceAll('<', '').trim().isNotEmpty) ? text : '';
+      return (text.contains('<') && text.replaceAll('<', '').trim().isNotEmpty)
+          ? text
+          : '';
     }
 
     for (var i = 0; i < list.length; i++) {
       if (RegExp(r'^[A-Za-z0-9_.]+$').hasMatch(list[i])) {
         list[i] = list[i].toUpperCase();
+        if (list[i] == 'l') list[i] = 'I';
         // to ensure that every letter is uppercase
       }
-      if (double.tryParse(list[i]) == null && !RegExp(r'^[A-Za-z0-9_.]+$').hasMatch(list[i])) {
+      if (double.tryParse(list[i]) == null &&
+          !RegExp(r'^[A-Za-z0-9_.]+$').hasMatch(list[i])) {
         list[i] = '<';
         // sometimes < sign not recognized well
       }
@@ -86,7 +91,12 @@ class MRZHelper {
       var lines = MRZHelper.getFinalListToParse(mrz2Line);
       if (lines != null && lines.isNotEmpty) {
         try {
-          final mrzResult = MRZParser.parse(lines);
+          final sanitized = <String>[
+            MrzPostprocess.sanitize(lines[0], forceLen: lines[0].length),
+            if (lines.length > 1)
+              MrzPostprocess.sanitize(lines[1], forceLen: lines[1].length),
+          ];
+          final mrzResult = MRZParser.parse(sanitized);
           debugPrint('$mrzResult');
           return mrzResult;
         } catch (e) {
@@ -119,7 +129,8 @@ class MRZHelper {
     }
 
     if (mrz44Lines.isNotEmpty && mrz44Lines.length == 1) {
-      mrz44Lines.insert(0, '$containSpecialSymbolLine${'<' * (44 - containSpecialSymbolLine.length)}');
+      mrz44Lines.insert(0,
+          '$containSpecialSymbolLine${'<' * (44 - containSpecialSymbolLine.length)}');
     }
 
     if (mrz44Lines.length >= 2) avaliableLines.add(mrz44Lines);
