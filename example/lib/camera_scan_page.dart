@@ -21,7 +21,7 @@ class _CameraScanPageState extends State<CameraScanPage> {
 
   void _onMRZDetected(
     String imagePath,
-    String originalText,
+    RecognizedText originalText,
     MRZResult mrzResult,
   ) {
     debugPrint('MRZ扫描结果: ${mrzResult.toJson()}');

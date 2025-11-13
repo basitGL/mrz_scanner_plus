@@ -1,16 +1,14 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:math';
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:mrz_scanner_plus/src/mask_painter.dart';
-import 'package:mrz_scanner_plus/src/mrz_parser/mrz_result.dart';
+import 'package:mrz_scanner_plus/mrz_scanner_plus.dart';
 import 'package:mrz_scanner_plus/src/parser.dart';
 
 typedef OnMRZDetected = void Function(
-  String imagePath,
+  List<String>? mrzLines,
   RecognizedText recognizedText,
   MRZResult mrzResult,
 );
@@ -125,9 +123,10 @@ class _CameraViewState extends State<CameraView>
         if (_controller != null && _controller!.value.isInitialized) {
           await _controller?.stopImageStream();
           final cropFile = await _takeAndCropImage();
+          final mrzLines = MRZHelper.getMrzLines(recognizedText.text);
           Future.delayed(const Duration(milliseconds: 500), () {
             widget.onMRZDetected?.call(
-              cropFile.path,
+              mrzLines,
               recognizedText,
               mrzResult,
             );

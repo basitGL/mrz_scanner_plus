@@ -75,6 +75,12 @@ class MRZHelper {
   }
 
   static MRZResult? parse(String recognizedText) {
+    final lines = getMrzLines(recognizedText);
+    if (lines == null) return null;
+    return MRZParser.parse(lines);
+  }
+
+  static List<String>? getMrzLines(String recognizedText) {
     var fullText = recognizedText.trim().replaceAll(' ', '');
     List allText = fullText.split('\n');
 
@@ -96,11 +102,9 @@ class MRZHelper {
             if (lines.length > 1)
               MrzPostprocess.sanitize(lines[1], forceLen: lines[1].length),
           ];
-          final mrzResult = MRZParser.parse(sanitized);
-          debugPrint('$mrzResult');
-          return mrzResult;
+          return sanitized;
         } catch (e) {
-          print(e);
+          debugPrint(e.toString());
         }
       }
     }
