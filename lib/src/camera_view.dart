@@ -11,7 +11,7 @@ import 'package:mrz_scanner_plus/src/parser.dart';
 
 typedef OnMRZDetected = void Function(
   String imagePath,
-  String originalText,
+  RecognizedText recognizedText,
   MRZResult mrzResult,
 );
 typedef OnDetected = void Function(String recognizeText);
@@ -128,7 +128,7 @@ class _CameraViewState extends State<CameraView>
           Future.delayed(const Duration(milliseconds: 500), () {
             widget.onMRZDetected?.call(
               cropFile.path,
-              recognizedText.text,
+              recognizedText,
               mrzResult,
             );
           });
