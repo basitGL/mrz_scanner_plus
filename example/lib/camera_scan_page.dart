@@ -19,7 +19,11 @@ class _CameraScanPageState extends State<CameraScanPage> {
     _notifier.value = text;
   }
 
-  void _onMRZDetected(String imagePath, MRZResult mrzResult) {
+  void _onMRZDetected(
+    String imagePath,
+    String originalText,
+    MRZResult mrzResult,
+  ) {
     debugPrint('MRZ扫描结果: ${mrzResult.toJson()}');
     debugPrint('图片路径: $imagePath');
     ImageGallerySaver.saveFile(imagePath);

@@ -1,10 +1,8 @@
-// lib/src/mrz_postprocess.dart
 import 'package:characters/characters.dart';
 
 /// Minimal MRZ sanitizer + name parser (TD3 passports, 44-char lines).
 /// Works as a post-process step on raw OCR lines before your existing parser.
 class MrzPostprocess {
-  static const _mrzAlphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<';
   static final _illegal = RegExp(r'[^A-Z0-9<]');
 
   // Common OCR confusions. Keep conservative for the name line.

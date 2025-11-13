@@ -19,7 +19,11 @@ class _CameraPageState extends State<CameraPage> {
     super.initState();
   }
 
-  Future<void> _saveImage(String imagePath, MRZResult mrzResult) async {
+  Future<void> _saveImage(
+    String imagePath,
+    String originalText,
+    MRZResult mrzResult,
+  ) async {
     final file = File(imagePath);
     final bytes = await file.readAsBytes();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -36,7 +40,8 @@ class _CameraPageState extends State<CameraPage> {
 
     // 确定图片的实际宽高，并计算正方形裁剪区域
     final bool isPortrait = image.height > image.width;
-    final double squareSize = min(image.width.toDouble(), image.height.toDouble());
+    final double squareSize =
+        min(image.width.toDouble(), image.height.toDouble());
     final double left = (image.width - squareSize) / 2;
     final double top = (image.height - squareSize) / 2;
 
@@ -80,7 +85,8 @@ class _CameraPageState extends State<CameraPage> {
     );
 
     // 转换为字节数据
-    final ByteData? byteData = await processedImage.toByteData(format: ui.ImageByteFormat.png);
+    final ByteData? byteData =
+        await processedImage.toByteData(format: ui.ImageByteFormat.png);
     final Uint8List processedBytes = byteData!.buffer.asUint8List();
 
     // 保存处理后的图像
