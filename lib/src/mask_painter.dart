@@ -40,7 +40,7 @@ class MaskPainter extends CustomPainter {
       paint,
     );
 
-    const lineLength = 40.0;
+    // const lineLength = 40.0;
 
     const horizontalLineLength = 30.0;
     const verticalLineLength = 20.0;
@@ -57,7 +57,8 @@ class MaskPainter extends CustomPainter {
     // Top Left Corner
     canvas.drawArc(
       Rect.fromCircle(
-        center: Offset(left + cornerRadius - offset, top + cornerRadius - offset),
+        center:
+            Offset(left + cornerRadius - offset, top + cornerRadius - offset),
         radius: cornerRadius,
       ),
       pi,
@@ -80,7 +81,8 @@ class MaskPainter extends CustomPainter {
     // Top Right Corner
     canvas.drawArc(
       Rect.fromCircle(
-        center: Offset(left + cardWidth - cornerRadius + offset, top + cornerRadius - offset),
+        center: Offset(left + cardWidth - cornerRadius + offset,
+            top + cornerRadius - offset),
         radius: cornerRadius,
       ),
       -pi / 2,
@@ -91,19 +93,22 @@ class MaskPainter extends CustomPainter {
     // Top Right Extension Lines
     canvas.drawLine(
       Offset(left + cardWidth - cornerRadius + offset, top - offset),
-      Offset(left + cardWidth - cornerRadius - horizontalLineLength + offset, top - offset),
+      Offset(left + cardWidth - cornerRadius - horizontalLineLength + offset,
+          top - offset),
       cornerPaint,
     );
     canvas.drawLine(
       Offset(left + cardWidth + offset, top + cornerRadius - offset),
-      Offset(left + cardWidth + offset, top + cornerRadius + verticalLineLength - offset),
+      Offset(left + cardWidth + offset,
+          top + cornerRadius + verticalLineLength - offset),
       cornerPaint,
     );
 
     // Bottom Left Corner
     canvas.drawArc(
       Rect.fromCircle(
-        center: Offset(left + cornerRadius - offset, top + cardHeight - cornerRadius + offset),
+        center: Offset(left + cornerRadius - offset,
+            top + cardHeight - cornerRadius + offset),
         radius: cornerRadius,
       ),
       pi / 2,
@@ -114,19 +119,22 @@ class MaskPainter extends CustomPainter {
     // Bottom Left Extension Lines
     canvas.drawLine(
       Offset(left + cornerRadius - offset, top + cardHeight + offset),
-      Offset(left + cornerRadius + horizontalLineLength - offset, top + cardHeight + offset),
+      Offset(left + cornerRadius + horizontalLineLength - offset,
+          top + cardHeight + offset),
       cornerPaint,
     );
     canvas.drawLine(
       Offset(left - offset, top + cardHeight - cornerRadius + offset),
-      Offset(left - offset, top + cardHeight - cornerRadius - verticalLineLength + offset),
+      Offset(left - offset,
+          top + cardHeight - cornerRadius - verticalLineLength + offset),
       cornerPaint,
     );
 
     // Bottom Right Corner
     canvas.drawArc(
       Rect.fromCircle(
-        center: Offset(left + cardWidth - cornerRadius + offset, top + cardHeight - cornerRadius + offset),
+        center: Offset(left + cardWidth - cornerRadius + offset,
+            top + cardHeight - cornerRadius + offset),
         radius: cornerRadius,
       ),
       0,
@@ -136,13 +144,17 @@ class MaskPainter extends CustomPainter {
     );
     // Bottom Right Extension Lines
     canvas.drawLine(
-      Offset(left + cardWidth - cornerRadius + offset, top + cardHeight + offset),
-      Offset(left + cardWidth - cornerRadius - horizontalLineLength + offset, top + cardHeight + offset),
+      Offset(
+          left + cardWidth - cornerRadius + offset, top + cardHeight + offset),
+      Offset(left + cardWidth - cornerRadius - horizontalLineLength + offset,
+          top + cardHeight + offset),
       cornerPaint,
     );
     canvas.drawLine(
-      Offset(left + cardWidth + offset, top + cardHeight - cornerRadius + offset),
-      Offset(left + cardWidth + offset, top + cardHeight - cornerRadius - verticalLineLength + offset),
+      Offset(
+          left + cardWidth + offset, top + cardHeight - cornerRadius + offset),
+      Offset(left + cardWidth + offset,
+          top + cardHeight - cornerRadius - verticalLineLength + offset),
       cornerPaint,
     );
 
@@ -154,7 +166,11 @@ class MaskPainter extends CustomPainter {
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [indicatorColor.withOpacity(0.1), indicatorColor, indicatorColor.withOpacity(0.1)],
+          colors: [
+            indicatorColor.withOpacity(0.1),
+            indicatorColor,
+            indicatorColor.withOpacity(0.1)
+          ],
           stops: const [0.0, 0.5, 1.0],
         ).createShader(Rect.fromLTWH(left, scanLineY - 20, cardWidth, 40));
 

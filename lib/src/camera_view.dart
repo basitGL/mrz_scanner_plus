@@ -122,7 +122,7 @@ class _CameraViewState extends State<CameraView>
 
         if (_controller != null && _controller!.value.isInitialized) {
           await _controller?.stopImageStream();
-          final cropFile = await _takeAndCropImage();
+          // final cropFile = await _takeAndCropImage();
           final mrzLines = MRZHelper.getMrzLines(recognizedText.text);
           Future.delayed(const Duration(milliseconds: 500), () {
             widget.onMRZDetected?.call(

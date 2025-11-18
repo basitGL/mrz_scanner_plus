@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:mrz_scanner_plus/mrz_scanner_plus.dart';
-import 'package:mrz_scanner_plus/src/camera_view.dart';
 
 class CameraScanPage extends StatefulWidget {
   const CameraScanPage({super.key});
@@ -20,13 +19,12 @@ class _CameraScanPageState extends State<CameraScanPage> {
   }
 
   void _onMRZDetected(
-    String imagePath,
+    List<String>? mrzLines,
     RecognizedText originalText,
     MRZResult mrzResult,
   ) {
-    debugPrint('MRZ扫描结果: ${mrzResult.toJson()}');
-    debugPrint('图片路径: $imagePath');
-    ImageGallerySaver.saveFile(imagePath);
+    debugPrint('mrzResult: ${mrzResult.toJson()}');
+    debugPrint('mrzLines: $mrzLines');
     // 显示MRZ扫描结果
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
