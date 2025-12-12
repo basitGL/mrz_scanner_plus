@@ -189,88 +189,75 @@ class _CameraViewState extends State<CameraView>
       return const Center(child: CircularProgressIndicator());
     }
 
-    return LayoutBuilder(builder: (context, constraints) {
-      final size = Size(constraints.maxWidth, constraints.maxHeight);
-      final frame = mrzFrameRect(size);
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          SizedBox.expand(
-            child: FittedBox(
-              fit: BoxFit.cover,
-              child: SizedBox(
-                width: _controller!.value.previewSize!.height,
-                height: _controller!.value.previewSize!.width,
-                child: CameraPreview(_controller!),
-              ),
-            ),
-          ),
-          if (widget.customOverlay != null)
-            widget.customOverlay!
-          else if (widget.mode == CameraMode.scan)
-            RepaintBoundary(
-              child: AnimatedBuilder(
-                animation: _animationController,
-                builder: (context, child) {
-                  return CustomPaint(
-                    painter: MaskPainter(
-                      animationValue: _animationController.value,
-                      indicatorColor:
-                          widget.indicatorColor ?? const Color(0xFFE1DED7),
-                    ),
-                    size: Size.infinite,
-                    child: const SizedBox.expand(),
-                  );
-                },
-              ),
-            )
-          else
-            CustomPaint(
-              painter: MaskPainter(
-                animationValue: null,
-                indicatorColor:
-                    widget.indicatorColor ?? const Color(0xFFE1DED7),
-              ),
-              size: Size.infinite,
-              child: const SizedBox.expand(),
-            ),
-
-          Positioned(
-            left: 0,
-            right: 0,
-            top: frame.bottom + 16,
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                "Position the front of your passport \nin the frame",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = Size(constraints.maxWidth, constraints.maxHeight);
+        final frame = mrzFrameRect(size);
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            SizedBox.expand(
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: _controller!.value.previewSize!.height,
+                  height: _controller!.value.previewSize!.width,
+                  child: CameraPreview(_controller!),
                 ),
               ),
             ),
-          ),
-          // Positioned(
-          //   left: 24,
-          //   right: 24,
-          //   top: frame.bottom + 16,
-          //   child: const Text(
-          //     '',
-          //     textAlign: TextAlign.center,
-          //     style: TextStyle(
-          //       color: Colors.white,
-          //       fontSize: 16,
-          //       fontWeight: FontWeight.w600,
-          //     ),
-          //   ),
-          // ),
-          if (widget.mode == CameraMode.photo)
-            widget.photoButton ?? _photoWidget(),
-        ],
-      );
-    });
+            if (widget.customOverlay != null)
+              widget.customOverlay!
+            else if (widget.mode == CameraMode.scan)
+              RepaintBoundary(
+                child: AnimatedBuilder(
+                  animation: _animationController,
+                  builder: (context, child) {
+                    return CustomPaint(
+                      painter: MaskPainter(
+                        animationValue: _animationController.value,
+                        indicatorColor:
+                            widget.indicatorColor ?? const Color(0xFFE1DED7),
+                      ),
+                      size: Size.infinite,
+                      child: const SizedBox.expand(),
+                    );
+                  },
+                ),
+              )
+            else
+              CustomPaint(
+                painter: MaskPainter(
+                  animationValue: null,
+                  indicatorColor:
+                      widget.indicatorColor ?? const Color(0xFFE1DED7),
+                ),
+                size: Size.infinite,
+                child: const SizedBox.expand(),
+              ),
+            Positioned(
+              left: 0,
+              right: 0,
+              top: frame.bottom + 16,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 22),
+                child: Text(
+                  "Position the front of your passport \nin the frame",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            if (widget.mode == CameraMode.photo)
+              widget.photoButton ?? _photoWidget(),
+          ],
+        );
+      },
+    );
   }
 
   Widget _photoWidget() {
