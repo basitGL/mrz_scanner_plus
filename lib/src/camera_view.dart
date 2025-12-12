@@ -189,51 +189,88 @@ class _CameraViewState extends State<CameraView>
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        SizedBox.expand(
-          child: FittedBox(
-            fit: BoxFit.cover,
-            child: SizedBox(
-              width: _controller!.value.previewSize!.height,
-              height: _controller!.value.previewSize!.width,
-              child: CameraPreview(_controller!),
+    return LayoutBuilder(builder: (context, constraints) {
+      final size = Size(constraints.maxWidth, constraints.maxHeight);
+      final frame = mrzFrameRect(size);
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          SizedBox.expand(
+            child: FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: _controller!.value.previewSize!.height,
+                height: _controller!.value.previewSize!.width,
+                child: CameraPreview(_controller!),
+              ),
             ),
           ),
-        ),
-        if (widget.customOverlay != null)
-          widget.customOverlay!
-        else if (widget.mode == CameraMode.scan)
-          RepaintBoundary(
-            child: AnimatedBuilder(
-              animation: _animationController,
-              builder: (context, child) {
-                return CustomPaint(
-                  painter: MaskPainter(
-                    animationValue: _animationController.value,
-                    indicatorColor:
-                        widget.indicatorColor ?? const Color(0xFFE1DED7),
-                  ),
-                  size: Size.infinite,
-                  child: Container(),
-                );
-              },
+          if (widget.customOverlay != null)
+            widget.customOverlay!
+          else if (widget.mode == CameraMode.scan)
+            RepaintBoundary(
+              child: AnimatedBuilder(
+                animation: _animationController,
+                builder: (context, child) {
+                  return CustomPaint(
+                    painter: MaskPainter(
+                      animationValue: _animationController.value,
+                      indicatorColor:
+                          widget.indicatorColor ?? const Color(0xFFE1DED7),
+                    ),
+                    size: Size.infinite,
+                    child: const SizedBox.expand(),
+                  );
+                },
+              ),
+            )
+          else
+            CustomPaint(
+              painter: MaskPainter(
+                animationValue: null,
+                indicatorColor:
+                    widget.indicatorColor ?? const Color(0xFFE1DED7),
+              ),
+              size: Size.infinite,
+              child: const SizedBox.expand(),
             ),
-          )
-        else
-          CustomPaint(
-            painter: MaskPainter(
-              animationValue: null,
-              indicatorColor: widget.indicatorColor ?? const Color(0xFFE1DED7),
+
+          Positioned(
+            left: 0,
+            right: 0,
+            top: frame.bottom + 16,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                "Position the front of your passport \nin the frame",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-            size: Size.infinite,
-            child: Container(),
           ),
-        if (widget.mode == CameraMode.photo)
-          widget.photoButton ?? _photoWidget(),
-      ],
-    );
+          // Positioned(
+          //   left: 24,
+          //   right: 24,
+          //   top: frame.bottom + 16,
+          //   child: const Text(
+          //     '',
+          //     textAlign: TextAlign.center,
+          //     style: TextStyle(
+          //       color: Colors.white,
+          //       fontSize: 16,
+          //       fontWeight: FontWeight.w600,
+          //     ),
+          //   ),
+          // ),
+          if (widget.mode == CameraMode.photo)
+            widget.photoButton ?? _photoWidget(),
+        ],
+      );
+    });
   }
 
   Widget _photoWidget() {
@@ -341,5 +378,13 @@ class _CameraViewState extends State<CameraView>
     image.dispose();
     processedImage.dispose();
     return imageFile;
+  }
+
+  Rect mrzFrameRect(Size size) {
+    final cardWidth = size.width * 0.85;
+    final cardHeight = cardWidth / 1.42;
+    final left = (size.width - cardWidth) / 2;
+    final top = (size.height - cardHeight) / 2;
+    return Rect.fromLTWH(left, top, cardWidth, cardHeight);
   }
 }
