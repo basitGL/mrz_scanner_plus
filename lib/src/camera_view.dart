@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:mrz_scanner_plus/mrz_scanner_plus.dart';
 import 'package:mrz_scanner_plus/src/parser.dart';
+import 'package:mrz_scanner_plus/src/services/image_correctness_checker.dart';
 
 typedef OnMRZDetected = void Function(
   List<String>? mrzLines,
@@ -37,6 +38,7 @@ class CameraView extends StatefulWidget {
   final OnMRZDetected? onMRZDetected;
   final OnPhotoTaken? onPhotoTaken;
   final OnDetected? onDetected;
+  final VoidCallback? onImageBlurry;
   final Widget? customOverlay;
   final CameraMode mode;
   final MrzCameraController? controller;
@@ -54,6 +56,7 @@ class CameraView extends StatefulWidget {
     this.mode = CameraMode.scan,
     this.photoButton,
     this.script = TextRecognitionScript.latin,
+    this.onImageBlurry,
   });
 
   @override
@@ -64,6 +67,7 @@ class _CameraViewState extends State<CameraView>
     with SingleTickerProviderStateMixin {
   CameraController? _controller;
   late TextRecognizer _textRecognizer;
+  final checker = ImageCorrectnessChecker();
 
   late AnimationController _animationController;
 
@@ -91,8 +95,8 @@ class _CameraViewState extends State<CameraView>
 
     await _controller?.initialize();
     if (widget.mode == CameraMode.scan) {
-      await Future.delayed(
-          Duration(milliseconds: Platform.isAndroid ? 500 : 2000));
+      await _controller?.setFocusMode(FocusMode.auto);
+      await Future.delayed(const Duration(seconds: 4));
       await _startImageStream();
     }
     if (mounted) setState(() {});
@@ -114,6 +118,13 @@ class _CameraViewState extends State<CameraView>
 
       try {
         final InputImage inputImage = _processImageForMlKit(image);
+        final blurry = checker.isImageBlurry(File(inputImage.filePath ?? ""));
+        if (blurry) {
+          if (widget.mode == CameraMode.scan && widget.onImageBlurry != null) {
+            widget.onImageBlurry!();
+          }
+          return;
+        }
         final recognizedText = await _textRecognizer.processImage(inputImage);
         widget.onDetected?.call(recognizedText.text);
         final mrzResult = Parser.parse(recognizedText.text);
