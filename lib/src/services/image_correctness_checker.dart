@@ -1,49 +1,112 @@
-import 'dart:io' show File;
-import 'dart:math' show pow;
-import 'package:image/image.dart' as img;
+import 'package:camera/camera.dart';
 
 class ImageCorrectnessChecker {
-  bool isImageBlurry(File imageFile) {
-    final variance = _calculateLaplacianVariance(imageFile);
-    const blurThreshold = 100.0;
+  final double blurThreshold;
+  final int step;
 
-    if (variance < blurThreshold) {
-      return true;
-    }
-    return false;
+  const ImageCorrectnessChecker({
+    this.blurThreshold = 100.0,
+    this.step = 3,
+  });
+
+  bool isImageBlurry(CameraImage image) {
+    final variance = laplacianVariance(image);
+    return variance < blurThreshold;
   }
 
-  double _calculateLaplacianVariance(File file) {
-    final bytes = file.readAsBytesSync();
-    final image = img.decodeImage(bytes)!;
-    final gray = img.grayscale(image);
+  double laplacianVariance(CameraImage image) {
+    if (image.planes.isEmpty) return 0;
+    if (image.planes.length >= 3) {
+      return _laplacianVarianceFromYPlane(image);
+    } else {
+      return _laplacianVarianceFromBGRA(image);
+    }
+  }
 
-    final width = gray.width;
-    final height = gray.height;
+  double _laplacianVarianceFromYPlane(CameraImage image) {
+    final width = image.width;
+    final height = image.height;
 
-    final laplacianValues = <int>[];
+    final yPlane = image.planes[0];
+    final bytes = yPlane.bytes;
+    final rowStride = yPlane.bytesPerRow;
 
-    for (int y = 1; y < height - 1; y++) {
-      for (int x = 1; x < width - 1; x++) {
-        final center = img.getLuminance(gray.getPixel(x, y));
-        final top = img.getLuminance(gray.getPixel(x, y - 1));
-        final bottom = img.getLuminance(gray.getPixel(x, y + 1));
-        final left = img.getLuminance(gray.getPixel(x - 1, y));
-        final right = img.getLuminance(gray.getPixel(x + 1, y));
+    // Welford running variance for Laplacian values
+    int count = 0;
+    double mean = 0;
+    double m2 = 0;
 
-        final laplacian = center * 4 - top - bottom - left - right;
+    // Sample inner pixels only
+    for (int y = 1; y < height - 1; y += step) {
+      final row = y * rowStride;
+      final rowUp = (y - 1) * rowStride;
+      final rowDown = (y + 1) * rowStride;
 
-        laplacianValues.add(laplacian.toInt());
+      for (int x = 1; x < width - 1; x += step) {
+        final center = bytes[row + x];
+        final top = bytes[rowUp + x];
+        final bottom = bytes[rowDown + x];
+        final left = bytes[row + x - 1];
+        final right = bytes[row + x + 1];
+
+        final laplacian = (center * 4) - top - bottom - left - right;
+
+        count++;
+        final delta = laplacian - mean;
+        mean += delta / count;
+        final delta2 = laplacian - mean;
+        m2 += delta * delta2;
       }
     }
 
-    final mean =
-        laplacianValues.reduce((a, b) => a + b) / laplacianValues.length;
+    if (count < 2) return 0;
+    return m2 / count; // population variance
+  }
 
-    final variance =
-        laplacianValues.map((v) => pow(v - mean, 2)).reduce((a, b) => a + b) /
-            laplacianValues.length;
+  double _laplacianVarianceFromBGRA(CameraImage image) {
+    final width = image.width;
+    final height = image.height;
 
-    return variance.toDouble();
+    final plane = image.planes[0];
+    final bytes = plane.bytes;
+    final rowStride = plane.bytesPerRow;
+    final bytesPerPixel = plane.bytesPerPixel ?? 4; // typically 4 for BGRA
+
+    int count = 0;
+    double mean = 0;
+    double m2 = 0;
+
+    int luminanceAt(int x, int y) {
+      final index = y * rowStride + x * bytesPerPixel;
+      // BGRA order
+      final b = bytes[index + 0];
+      final g = bytes[index + 1];
+      final r = bytes[index + 2];
+
+      // Integer approximation of Rec. 601 luma:
+      // Y ≈ 0.299R + 0.587G + 0.114B
+      return ((77 * r + 150 * g + 29 * b) >> 8);
+    }
+
+    for (int y = 1; y < height - 1; y += step) {
+      for (int x = 1; x < width - 1; x += step) {
+        final center = luminanceAt(x, y);
+        final top = luminanceAt(x, y - 1);
+        final bottom = luminanceAt(x, y + 1);
+        final left = luminanceAt(x - 1, y);
+        final right = luminanceAt(x + 1, y);
+
+        final laplacian = (center * 4) - top - bottom - left - right;
+
+        count++;
+        final delta = laplacian - mean;
+        mean += delta / count;
+        final delta2 = laplacian - mean;
+        m2 += delta * delta2;
+      }
+    }
+
+    if (count < 2) return 0;
+    return m2 / count;
   }
 }

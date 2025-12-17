@@ -7,8 +7,6 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:mrz_scanner_plus/mrz_scanner_plus.dart';
 import 'package:mrz_scanner_plus/src/parser.dart';
 import 'package:mrz_scanner_plus/src/services/image_correctness_checker.dart';
-import 'package:image/image.dart' as img;
-import 'package:mrz_scanner_plus/src/services/image_format_converter.dart';
 
 typedef OnMRZDetected = void Function(
   List<String>? mrzLines,
@@ -69,8 +67,7 @@ class _CameraViewState extends State<CameraView>
     with SingleTickerProviderStateMixin {
   CameraController? _controller;
   late TextRecognizer _textRecognizer;
-  final checker = ImageCorrectnessChecker();
-  final converter = ImageFormatConverter();
+  final checker = const ImageCorrectnessChecker();
 
   late AnimationController _animationController;
 
@@ -131,7 +128,7 @@ class _CameraViewState extends State<CameraView>
     _controller?.startImageStream((CameraImage image) async {
       final now = DateTime.now();
       if (_isProcessing ||
-          now.difference(_lastProcessTime).inMilliseconds < 500) {
+          now.difference(_lastProcessTime).inMilliseconds < 1000) {
         return;
       }
       _isProcessing = true;
@@ -139,8 +136,7 @@ class _CameraViewState extends State<CameraView>
 
       try {
         final InputImage inputImage = _processImageForMlKit(image);
-        final imgFile = await converter.cameraImageToFile(image);
-        final blurry = checker.isImageBlurry(imgFile);
+        final blurry = checker.isImageBlurry(image);
         if (blurry) {
           if (widget.mode == CameraMode.scan && widget.onImageBlurry != null) {
             widget.onImageBlurry!();
