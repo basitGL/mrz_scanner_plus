@@ -94,13 +94,31 @@ class _CameraViewState extends State<CameraView>
     );
 
     await _controller?.initialize();
+
+    if (!mounted) return;
+    setState(() {});
+    widget.controller?._bind(_controller, context);
+
     if (widget.mode == CameraMode.scan) {
       await _controller?.setFocusMode(FocusMode.auto);
-      await Future.delayed(const Duration(seconds: 4));
-      await _startImageStream();
+      Future.delayed(const Duration(seconds: 3), () async {
+        if (!mounted ||
+            _controller == null ||
+            !_controller!.value.isInitialized) {
+          return;
+        }
+        await _startImageStream();
+      });
     }
-    if (mounted) setState(() {});
-    widget.controller?._bind(_controller, context);
+
+    // await _controller?.initialize();
+    // if (widget.mode == CameraMode.scan) {
+    //   await _controller?.setFocusMode(FocusMode.auto);
+    //   await Future.delayed(const Duration(seconds: 2));
+    //   await _startImageStream();
+    // }
+    // if (mounted) setState(() {});
+    // widget.controller?._bind(_controller, context);
   }
 
   bool _isProcessing = false;
