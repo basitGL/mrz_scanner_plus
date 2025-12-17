@@ -7,6 +7,8 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:mrz_scanner_plus/mrz_scanner_plus.dart';
 import 'package:mrz_scanner_plus/src/parser.dart';
 import 'package:mrz_scanner_plus/src/services/image_correctness_checker.dart';
+import 'package:image/image.dart' as img;
+import 'package:mrz_scanner_plus/src/services/image_format_converter.dart';
 
 typedef OnMRZDetected = void Function(
   List<String>? mrzLines,
@@ -68,6 +70,7 @@ class _CameraViewState extends State<CameraView>
   CameraController? _controller;
   late TextRecognizer _textRecognizer;
   final checker = ImageCorrectnessChecker();
+  final converter = ImageFormatConverter();
 
   late AnimationController _animationController;
 
@@ -136,7 +139,8 @@ class _CameraViewState extends State<CameraView>
 
       try {
         final InputImage inputImage = _processImageForMlKit(image);
-        final blurry = checker.isImageBlurry(File(inputImage.filePath ?? ""));
+        final imgFile = await converter.cameraImageToFile(image);
+        final blurry = checker.isImageBlurry(imgFile);
         if (blurry) {
           if (widget.mode == CameraMode.scan && widget.onImageBlurry != null) {
             widget.onImageBlurry!();
