@@ -89,7 +89,7 @@ class _CameraViewState extends State<CameraView>
     final camera = cameras.first;
     _controller = CameraController(
       camera,
-      ResolutionPreset.veryHigh,
+      ResolutionPreset.max,
       enableAudio: false,
     );
 
@@ -170,27 +170,61 @@ class _CameraViewState extends State<CameraView>
   }
 
   InputImage _processImageForMlKit(CameraImage image) {
-    final WriteBuffer allBytes = WriteBuffer();
-    for (final Plane plane in image.planes) {
-      allBytes.putUint8List(plane.bytes);
-    }
-    final bytes = allBytes.done().buffer.asUint8List();
+    final rotation = _getInputImageRotation();
 
-    final Size imageSize = Size(
-      image.width.toDouble(),
-      image.height.toDouble(),
-    );
-    const InputImageRotation imageRotation = InputImageRotation.rotation0deg;
+    final imageSize = Size(image.width.toDouble(), image.height.toDouble());
+
+    if (Platform.isAndroid) {
+      // Most Android devices deliver YUV_420_888 with 3 planes for CameraImage.
+      // Convert to NV21 and pass consistent metadata.
+      final Uint8List bytes;
+      final InputImageFormat format;
+      final int bytesPerRow;
+
+      if (image.planes.length == 3) {
+        bytes = _yuv420ToNv21(image);
+        format = InputImageFormat.nv21;
+        bytesPerRow = image.width; // For NV21, row stride is width
+      } else if (image.planes.length == 1) {
+        // Some devices may give NV21-like single plane; treat carefully.
+        // If it's truly NV21, you can pass it directly.
+        bytes = image.planes[0].bytes;
+        format = InputImageFormat.nv21;
+        bytesPerRow = image.planes[0].bytesPerRow;
+      } else {
+        // Fallback: concatenate planes (least reliable); better to throw/log.
+        final WriteBuffer allBytes = WriteBuffer();
+        for (final plane in image.planes) {
+          allBytes.putUint8List(plane.bytes);
+        }
+        bytes = allBytes.done().buffer.asUint8List();
+        // Still declare yuv_420_888 if you do this fallback
+        format = InputImageFormat.yuv_420_888;
+        bytesPerRow = image.planes.first.bytesPerRow;
+      }
+
+      return InputImage.fromBytes(
+        bytes: bytes,
+        metadata: InputImageMetadata(
+          size: imageSize,
+          rotation: rotation,
+          format: format,
+          bytesPerRow: bytesPerRow,
+        ),
+      );
+    }
+
+    // iOS: typically BGRA8888 (single plane). Your original path is fine,
+    // but do not hardcode rotation if you allow device rotation.
+    final bytes = image.planes[0].bytes;
 
     return InputImage.fromBytes(
       bytes: bytes,
       metadata: InputImageMetadata(
         size: imageSize,
-        rotation: imageRotation,
-        format: Platform.isAndroid
-            ? InputImageFormat.nv21
-            : InputImageFormat.bgra8888,
-        bytesPerRow: image.planes.first.bytesPerRow,
+        rotation: rotation,
+        format: InputImageFormat.bgra8888,
+        bytesPerRow: image.planes[0].bytesPerRow,
       ),
     );
   }
@@ -323,6 +357,57 @@ class _CameraViewState extends State<CameraView>
     );
   }
 
+  InputImageRotation _getInputImageRotation() {
+    final controller = _controller;
+    if (controller == null) return InputImageRotation.rotation0deg;
+
+    final sensorOrientation = controller.description.sensorOrientation;
+
+    // This is the *preview* / device orientation as reported by the camera plugin.
+    // It updates as device rotates (unless you lock orientation).
+    final deviceOrientation = controller.value.deviceOrientation;
+
+    // Map DeviceOrientation -> degrees
+    int deviceRotationDegrees;
+    switch (deviceOrientation) {
+      case DeviceOrientation.portraitUp:
+        deviceRotationDegrees = 0;
+        break;
+      case DeviceOrientation.landscapeLeft:
+        deviceRotationDegrees = 90;
+        break;
+      case DeviceOrientation.portraitDown:
+        deviceRotationDegrees = 180;
+        break;
+      case DeviceOrientation.landscapeRight:
+        deviceRotationDegrees = 270;
+        break;
+    }
+
+    // For back camera, rotation is typically (sensor - device + 360) % 360
+    // For front camera, it's (sensor + device) % 360 (mirroring differences).
+    final isFrontCamera =
+        controller.description.lensDirection == CameraLensDirection.front;
+
+    final rotationDegrees = isFrontCamera
+        ? (sensorOrientation + deviceRotationDegrees) % 360
+        : (sensorOrientation - deviceRotationDegrees + 360) % 360;
+
+    switch (rotationDegrees) {
+      case 0:
+        return InputImageRotation.rotation0deg;
+      case 90:
+        return InputImageRotation.rotation90deg;
+      case 180:
+        return InputImageRotation.rotation180deg;
+      case 270:
+        return InputImageRotation.rotation270deg;
+      default:
+        // Fallback if something unexpected happens
+        return InputImageRotation.rotation0deg;
+    }
+  }
+
   Future<File> _takeAndCropImage() async {
     final XFile picture = await _controller!.takePicture();
     // 处理图片旋转
@@ -403,4 +488,53 @@ class _CameraViewState extends State<CameraView>
     final top = (size.height - cardHeight) / 2;
     return Rect.fromLTWH(left, top, cardWidth, cardHeight);
   }
+}
+
+Uint8List _yuv420ToNv21(CameraImage image) {
+  final width = image.width;
+  final height = image.height;
+
+  final yPlane = image.planes[0];
+  final uPlane = image.planes[1];
+  final vPlane = image.planes[2];
+
+  final yBytes = yPlane.bytes;
+  final uBytes = uPlane.bytes;
+  final vBytes = vPlane.bytes;
+
+  final yRowStride = yPlane.bytesPerRow;
+
+  final uvRowStride = uPlane.bytesPerRow;
+  final uvPixelStride = uPlane.bytesPerPixel ?? 1;
+
+  // NV21 = Y plane (W*H) + interleaved VU (W*H/2)
+  final nv21 = Uint8List(width * height + (width * height ~/ 2));
+
+  // Copy Y plane (respect row stride)
+  int nv21Index = 0;
+  for (int row = 0; row < height; row++) {
+    final yRowStart = row * yRowStride;
+    nv21.setRange(nv21Index, nv21Index + width, yBytes, yRowStart);
+    nv21Index += width;
+  }
+
+  // Interleave V and U bytes (NV21 expects VU order)
+  // UV planes are half resolution (height/2, width/2)
+  final uvHeight = height ~/ 2;
+  final uvWidth = width ~/ 2;
+
+  for (int row = 0; row < uvHeight; row++) {
+    final uvRowStart = row * uvRowStride;
+    for (int col = 0; col < uvWidth; col++) {
+      final uvIndex = uvRowStart + col * uvPixelStride;
+
+      final v = vBytes[uvIndex];
+      final u = uBytes[uvIndex];
+
+      nv21[nv21Index++] = v;
+      nv21[nv21Index++] = u;
+    }
+  }
+
+  return nv21;
 }
