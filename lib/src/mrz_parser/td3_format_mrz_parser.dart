@@ -56,21 +56,6 @@ class _TD3MRZFormatParser {
     final expiryDateCheckDigitFixed =
         MRZFieldRecognitionDefectsFixer.fixCheckDigit(expiryDateCheckDigitRaw);
     final optionalDataFixed = optionalDataRaw;
-    // final optionalDataCheckDigitFixed = optionalDataCheckDigitRaw != null
-    //     ? MRZFieldRecognitionDefectsFixer.fixCheckDigit(
-    //         optionalDataCheckDigitRaw,
-    //       )
-    //     : null;
-    // final finalCheckDigitFixed = finalCheckDigitRaw != null
-    //     ? MRZFieldRecognitionDefectsFixer.fixCheckDigit(finalCheckDigitRaw)
-    //     : null;
-
-    // final documentNumberIsValid = int.tryParse(documentNumberCheckDigitFixed) ==
-    //     MRZCheckDigitCalculator.getCheckDigit(documentNumberFixed);
-    //
-    // if (!documentNumberIsValid) {
-    //   throw const InvalidDocumentNumberException();
-    // }
 
     final birthDateIsValid = int.tryParse(birthDateCheckDigitFixed) ==
         MRZCheckDigitCalculator.getCheckDigit(birthDateFixed);
@@ -85,32 +70,6 @@ class _TD3MRZFormatParser {
     if (!expiryDateIsValid) {
       throw const InvalidExpiryDateException();
     }
-
-    // if (optionalDataCheckDigitFixed != null) {
-    //   final optionalDataIsValid = (int.tryParse(optionalDataCheckDigitFixed) ==
-    //           MRZCheckDigitCalculator.getCheckDigit(optionalDataFixed)) ||
-    //       ((optionalDataCheckDigitFixed == '<') &&
-    //           MRZFieldParser.parseOptionalData(optionalDataFixed).isEmpty);
-    //
-    //   if (!optionalDataIsValid) {
-    //     throw const InvalidOptionalDataException();
-    //   }
-    // }
-
-    // if (finalCheckDigitFixed != null) {
-    //   final finalCheckStringFixed =
-    //       '$documentNumberFixed$documentNumberCheckDigitFixed'
-    //       '$birthDateFixed$birthDateCheckDigitFixed'
-    //       '$expiryDateFixed$expiryDateCheckDigitFixed'
-    //       '$optionalDataFixed${optionalDataCheckDigitFixed ?? ''}';
-    //
-    //   final finalCheckStringIsValid = int.tryParse(finalCheckDigitFixed) ==
-    //       MRZCheckDigitCalculator.getCheckDigit(finalCheckStringFixed);
-    //
-    //   if (!finalCheckStringIsValid) {
-    //     throw const InvalidMRZValueException();
-    //   }
-    // }
 
     final documentType = MRZFieldParser.parseDocumentType(documentTypeFixed);
     final countryCode = MRZFieldParser.parseCountryCode(countryCodeFixed);

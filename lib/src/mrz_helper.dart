@@ -4,6 +4,7 @@ import 'package:mrz_scanner_plus/src/mrz_parser/mrz_result.dart';
 import 'package:mrz_scanner_plus/src/mrz_postprocess.dart';
 
 class MRZHelper {
+  static var supportedDocTypes = <String>['A', 'C', 'P', 'V', 'I'];
   static List<String>? getFinalListToParse(List<String> ableToScanTextList) {
     if (ableToScanTextList.length < 2) {
       // minimum length of any MRZ format is 2 lines
@@ -17,7 +18,7 @@ class MRZHelper {
       // to make sure that all lines are the same in length
     }
     var firstLineChars = ableToScanTextList.first.split('');
-    var supportedDocTypes = <String>['A', 'C', 'P', 'V', 'I'];
+
     var fChar = firstLineChars[0];
     if (supportedDocTypes.contains(fChar)) {
       return [...ableToScanTextList];
@@ -71,6 +72,9 @@ class MRZHelper {
       }
     }
     var result = list.join();
+    if (result.length == 44 && supportedDocTypes.contains(result[0])) {
+      result = _fixTd3NameZone(result);
+    }
     return result;
   }
 
@@ -91,7 +95,7 @@ class MRZHelper {
       }
     }
 
-    final mrzLines = _filterAvaliableLines(ableToScanText);
+    final mrzLines = _filterAvailableLines(ableToScanText);
     for (final mrz2Line in mrzLines) {
       debugPrint('OCR:\N${mrz2Line.join('\n')}');
       var lines = MRZHelper.getFinalListToParse(mrz2Line);
@@ -111,8 +115,8 @@ class MRZHelper {
     return null;
   }
 
-  static List<List<String>> _filterAvaliableLines(List<String> lines) {
-    final avaliableLines = <List<String>>[];
+  static List<List<String>> _filterAvailableLines(List<String> lines) {
+    final availableLines = <List<String>>[];
     final mrz44Lines = <String>[];
 
     var containSpecialSymbolLine = '<';
@@ -137,9 +141,72 @@ class MRZHelper {
           '$containSpecialSymbolLine${'<' * (44 - containSpecialSymbolLine.length)}');
     }
 
-    if (mrz44Lines.length >= 2) avaliableLines.add(mrz44Lines);
+    if (mrz44Lines.length >= 2) availableLines.add(mrz44Lines);
 
-    return avaliableLines;
+    return availableLines;
+  }
+
+  static String _fixTd3NameZone(String line) {
+    // TD3: 44 chars. Line 1 layout:
+    // [0..1]=doc code, [2..4]=issuing state, [5..43]=names
+    if (line.length != 44) return line;
+    if (line.length < 6) return line;
+
+    const nameStart = 5;
+    final head = line.substring(0, nameStart);
+    var zone = line.substring(nameStart);
+
+    // Normalize common chevron lookalikes to '<'
+    zone = zone.replaceAll(RegExp(r'[‹≪⪡«⟨《]'), '<');
+
+    // Replace 'K/k' used as filler between chevrons: "<K<" or "<k<" or "<KK<"
+    zone = zone.replaceAll(RegExp(r'(?<=<)[Kk]+(?=<)'), '');
+
+    // Also handle cases like "K<" or "<K" at boundaries inside the zone
+    // by removing leading/trailing K runs from name tokens.
+    int sepIdx = zone.indexOf('<<');
+    if (sepIdx < 0) {
+      // If OCR collapsed '<<' into something else, we still try token-level cleanup.
+      final tokens = zone.split('<').map(_trimKToken).toList();
+      zone = tokens.join('<');
+    } else {
+      final surnameRaw = zone.substring(0, sepIdx);
+      final givenRaw = zone.substring(sepIdx + 2);
+
+      final surnameTokens = surnameRaw.split('<').map(_trimKToken).toList();
+      final givenTokens = givenRaw.split('<').map(_trimKToken).toList();
+
+      final surnameClean = surnameTokens.join('<');
+      final givenClean = givenTokens.join('<');
+
+      zone = '$surnameClean<<$givenClean';
+    }
+
+    // Ensure only valid MRZ charset in zone (A-Z, 0-9, <)
+    zone = zone.replaceAll(RegExp(r'[^A-Z0-9<]'), '<');
+
+    // Force zone length back to 39 (44 - 5) by padding/truncating with '<'
+    const zoneLen = 39;
+    if (zone.length > zoneLen) zone = zone.substring(0, zoneLen);
+    if (zone.length < zoneLen) zone = zone.padRight(zoneLen, '<');
+
+    return head + zone;
+  }
+
+  static String _trimKToken(String t) {
+    if (t.isEmpty) return t;
+
+    // Remove spurious K/k only when it looks like an OCR artifact at token edges.
+    // We avoid deleting legitimate 'K' inside names like "KARIM".
+    var s = t;
+
+    // Leading K-run is suspicious if token length >= 2 and the rest is letters/digits
+    if (s.length >= 2) {
+      s = s.replaceFirst(RegExp(r'^[Kk]+(?=[A-Z0-9])'), '');
+      s = s.replaceFirst(RegExp(r'(?<=[A-Z0-9])[Kk]+$'), '');
+    }
+
+    return s;
   }
 
   static String _ifNotEnough(String text) {

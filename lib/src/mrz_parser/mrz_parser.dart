@@ -40,12 +40,12 @@ class MRZParser {
       throw const InvalidMRZInputException();
     }
 
-    if (_TD1MRZFormatParser.isValidInput(polishedInput)) {
-      return _TD1MRZFormatParser.parse(polishedInput);
-    }
-    if (_TD2MRZFormatParser.isValidInput(polishedInput)) {
-      return _TD2MRZFormatParser.parse(polishedInput);
-    }
+    // if (_TD1MRZFormatParser.isValidInput(polishedInput)) {
+    //   return _TD1MRZFormatParser.parse(polishedInput);
+    // }
+    // if (_TD2MRZFormatParser.isValidInput(polishedInput)) {
+    //   return _TD2MRZFormatParser.parse(polishedInput);
+    // }
     if (_TD3MRZFormatParser.isValidInput(polishedInput)) {
       return _TD3MRZFormatParser.parse(polishedInput);
     }
