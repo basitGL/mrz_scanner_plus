@@ -82,7 +82,18 @@ class _TD3MRZFormatParser {
     final expiryDate = MRZFieldParser.parseExpiryDate(expiryDateFixed);
     final optionalData = MRZFieldParser.parseOptionalData(optionalDataFixed);
 
-    return MRZResult(
+    log("td3 values: ");
+    log("documentType: $documentType");
+    log("countryCode: $countryCode");
+    log("names: $names");
+    log("documentNumber: $documentNumber");
+    log("nationality: $nationality");
+    log("birthDate: $birthDate");
+    log("sex: $sex");
+    log("expiryDate: $expiryDate");
+    log("optionalData: $optionalData");
+
+    final result = MRZResult(
       documentType: documentType,
       countryCode: countryCode,
       surnames: names[0],
@@ -94,5 +105,8 @@ class _TD3MRZFormatParser {
       expiryDate: expiryDate,
       personalNumber: optionalData,
     );
+    log("result td3:");
+    log(result.toString());
+    return result;
   }
 }

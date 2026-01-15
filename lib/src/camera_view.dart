@@ -7,6 +7,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:mrz_scanner_plus/mrz_scanner_plus.dart';
 import 'package:mrz_scanner_plus/src/parser.dart';
 import 'package:mrz_scanner_plus/src/services/image_correctness_checker.dart';
+import 'dart:developer' as dev;
 
 typedef OnMRZDetected = void Function(
   List<String>? mrzLines,
@@ -150,9 +151,11 @@ class _CameraViewState extends State<CameraView>
         if (mrzResult.isUnAvailable()) return;
 
         if (_controller != null && _controller!.value.isInitialized) {
-          await _controller?.stopImageStream();
+          _controller?.stopImageStream();
           // final cropFile = await _takeAndCropImage();
           final mrzLines = MRZHelper.getMrzLines(recognizedText.text);
+          dev.log(mrzLines.toString(), name: 'MRZ Lines:');
+          dev.log(recognizedText.text, name: 'Recognized Text:');
           Future.delayed(const Duration(milliseconds: 500), () {
             widget.onMRZDetected?.call(
               mrzLines,
