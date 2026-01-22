@@ -26,7 +26,7 @@ class MRZFieldRecognitionDefectsFixer {
     s = s.replaceAll(RegExp(r'[‹≪⪡«⟨《]'), '<');
 
     // remove K/k used as filler between chevrons: "<K<" or "<KK<"
-    s = s.replaceAll(RegExp(r'(?<=<)[K]+(?=<)'), '');
+    // s = s.replaceAll(RegExp(r'(?<=<)[K]+(?=<)'), '');
 
     // cleanup token-edge K only in the names field (conservative)
     final parts = s.split('<').map((p) {
