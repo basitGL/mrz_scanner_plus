@@ -110,8 +110,6 @@ class _TD3MRZFormatParser {
       expiryDate: expiryDate,
       personalNumber: optionalData,
     );
-    log("result td3:");
-    log(result.toString());
     return result;
   }
 }

@@ -167,7 +167,7 @@ class MRZHelper {
     zone = zone.replaceAll(RegExp(r'[‹≪⪡«⟨《]'), '<');
 
     // Replace 'K/k' used as filler between chevrons: "<K<" or "<k<" or "<KK<"
-    // zone = zone.replaceAll(RegExp(r'(?<=<)[Kk]+(?=<)'), '');
+    zone = zone.replaceAll(RegExp(r'(?<=<)[Kk]+(?=<)'), '');
 
     // Also handle cases like "K<" or "<K" at boundaries inside the zone
     // by removing leading/trailing K runs from name tokens.
