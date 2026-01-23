@@ -80,6 +80,7 @@ class MRZHelper {
 
   static MRZResult? parse(String recognizedText) {
     final lines = getMrzLines(recognizedText);
+    print('[getMrzLines:] $lines');
     if (lines == null) return null;
     return MRZParser.parse(lines);
   }
@@ -90,15 +91,18 @@ class MRZHelper {
 
     var ableToScanText = <String>[];
     for (final line in allText) {
-      if (MRZHelper.testTextLine(line).isNotEmpty) {
-        ableToScanText.add(MRZHelper.testTextLine(line));
+      if (testTextLine(line).isNotEmpty) {
+        ableToScanText.add(testTextLine(line));
       }
     }
 
+    print('after ableToScanText:$ableToScanText');
     final mrzLines = _filterAvailableLines(ableToScanText);
+    print('after filter:$mrzLines');
     for (final mrz2Line in mrzLines) {
-      debugPrint('OCR:\N${mrz2Line.join('\n')}');
-      var lines = MRZHelper.getFinalListToParse(mrz2Line);
+      debugPrint('OCR:\n${mrz2Line.join('\n')}');
+      var lines = getFinalListToParse(mrz2Line);
+      print('getFinalListToParse: $lines');
       if (lines != null && lines.isNotEmpty) {
         try {
           final sanitized = <String>[
@@ -106,6 +110,7 @@ class MRZHelper {
             if (lines.length > 1)
               MrzPostprocess.sanitize(lines[1], forceLen: lines[1].length),
           ];
+          print('after sanitization: $sanitized');
           return sanitized;
         } catch (e) {
           debugPrint(e.toString());
