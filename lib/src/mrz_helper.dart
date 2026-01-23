@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:mrz_scanner_plus/src/mrz_parser/mrz_parser.dart';
 import 'package:mrz_scanner_plus/src/mrz_parser/mrz_result.dart';
@@ -80,7 +82,7 @@ class MRZHelper {
 
   static MRZResult? parse(String recognizedText) {
     final lines = getMrzLines(recognizedText);
-    print('[getMrzLines:] $lines');
+    log('[getMrzLines:] $lines');
     if (lines == null) return null;
     return MRZParser.parse(lines);
   }
@@ -96,13 +98,13 @@ class MRZHelper {
       }
     }
 
-    print('after ableToScanText:$ableToScanText');
+    log('after ableToScanText:$ableToScanText');
     final mrzLines = _filterAvailableLines(ableToScanText);
-    print('after filter:$mrzLines');
+    log('after filter:$mrzLines');
     for (final mrz2Line in mrzLines) {
       debugPrint('OCR:\n${mrz2Line.join('\n')}');
       var lines = getFinalListToParse(mrz2Line);
-      print('getFinalListToParse: $lines');
+      log('getFinalListToParse: $lines');
       if (lines != null && lines.isNotEmpty) {
         try {
           final sanitized = <String>[
@@ -110,7 +112,7 @@ class MRZHelper {
             if (lines.length > 1)
               MrzPostprocess.sanitize(lines[1], forceLen: lines[1].length),
           ];
-          print('after sanitization: $sanitized');
+          log('after sanitization: $sanitized');
           return sanitized;
         } catch (e) {
           debugPrint(e.toString());
