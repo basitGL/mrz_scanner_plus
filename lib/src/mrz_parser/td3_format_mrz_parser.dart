@@ -85,6 +85,7 @@ class _TD3MRZFormatParser {
     final optionalData = MRZFieldParser.parseOptionalData(optionalDataFixed);
 
     log("formatter-name-fix:: $namesFixed");
+    log("formatter-raw-name:: $namesRaw");
 
     log("td3 values: ");
     log("documentType: $documentType");
