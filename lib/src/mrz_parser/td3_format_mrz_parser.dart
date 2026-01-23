@@ -18,6 +18,9 @@ class _TD3MRZFormatParser {
     final firstLine = input[0];
     final secondLine = input[1];
 
+    log("formatter-firstLine: $firstLine");
+    log("formatter-secondLine: $secondLine");
+
     final documentTypeRaw = firstLine.substring(0, 2);
     final countryCodeRaw = firstLine.substring(2, 5);
     final namesRaw = firstLine.substring(5);
@@ -80,6 +83,8 @@ class _TD3MRZFormatParser {
     final sex = MRZFieldParser.parseSex(sexFixed);
     final expiryDate = MRZFieldParser.parseExpiryDate(expiryDateFixed);
     final optionalData = MRZFieldParser.parseOptionalData(optionalDataFixed);
+
+    log("formatter-name-fix:: $namesFixed");
 
     log("td3 values: ");
     log("documentType: $documentType");
