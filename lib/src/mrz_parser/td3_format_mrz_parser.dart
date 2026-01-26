@@ -86,7 +86,9 @@ class _TD3MRZFormatParser {
     final result = MRZResult(
       documentType: documentType,
       countryCode: countryCode,
-      surnames: hasCountryCode ? names[0].substring(4) : names[0],
+      surnames: hasCountryCode || countryCode.isEmpty
+          ? names[0].substring(4)
+          : names[0],
       givenNames: names[1],
       documentNumber: documentNumber,
       nationalityCountryCode: nationality,
