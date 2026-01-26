@@ -204,7 +204,7 @@ class MRZHelper {
 
     // Leading K-run is suspicious if token length >= 2 and the rest is letters/digits
     if (s.length >= 2) {
-      s = s.replaceFirst(RegExp(r'^[Kk]+(?=[A-Z0-9])'), '');
+      // s = s.replaceFirst(RegExp(r'^[Kk]+(?=[A-Z0-9])'), '');
       s = s.replaceFirst(RegExp(r'(?<=[A-Z0-9])[Kk]+$'), '');
     }
 
