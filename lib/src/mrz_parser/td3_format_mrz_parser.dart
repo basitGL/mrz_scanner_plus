@@ -81,17 +81,16 @@ class _TD3MRZFormatParser {
     final expiryDate = MRZFieldParser.parseExpiryDate(expiryDateFixed);
     final optionalData = MRZFieldParser.parseOptionalData(optionalDataFixed);
 
-    final hasCountryCode = names[0].substring(0, 4) == countryCode;
+    final hasCountryCode = names[0].substring(0, 3) == countryCode;
 
     log("[passport] country code: $countryCode");
     log("[passport] firstname: ${names[0]}");
-
+    final cc = calculateCountryCode(countryCode, names[0]);
+    final surnames = calculateFirstName(countryCode, names[0]);
     final result = MRZResult(
       documentType: documentType,
-      countryCode: countryCode.isEmpty ? names[0].substring(0, 3) : countryCode,
-      surnames: hasCountryCode || countryCode.isEmpty
-          ? names[0].substring(3)
-          : names[0],
+      countryCode: cc,
+      surnames: surnames,
       givenNames: names[1],
       documentNumber: documentNumber,
       nationalityCountryCode: nationality,
@@ -101,5 +100,35 @@ class _TD3MRZFormatParser {
       personalNumber: optionalData,
     );
     return result;
+  }
+
+  static String calculateCountryCode(String countryCode, String firstName) {
+    switch (countryCode.length) {
+      case 3:
+        return countryCode;
+      case 2:
+        return countryCode + firstName.substring(0, 1);
+      case 1:
+        return countryCode + firstName.substring(0, 2);
+      case 0:
+        return firstName.substring(0, 3);
+      default:
+        return countryCode;
+    }
+  }
+
+  static String calculateFirstName(String countryCode, String firstName) {
+    switch (countryCode.length) {
+      case 3:
+        return firstName;
+      case 2:
+        return firstName.substring(1);
+      case 1:
+        return firstName.substring(2);
+      case 0:
+        return firstName.substring(3);
+      default:
+        return firstName;
+    }
   }
 }
