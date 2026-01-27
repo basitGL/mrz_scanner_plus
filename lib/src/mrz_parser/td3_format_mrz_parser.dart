@@ -83,9 +83,12 @@ class _TD3MRZFormatParser {
 
     final hasCountryCode = names[0].substring(0, 4) == countryCode;
 
+    log("[passport] country code: $countryCode");
+    log("[passport] firstname: ${names[0]}");
+
     final result = MRZResult(
       documentType: documentType,
-      countryCode: countryCode,
+      countryCode: countryCode.isEmpty ? names[0].substring(0, 4) : countryCode,
       surnames: hasCountryCode || countryCode.isEmpty
           ? names[0].substring(4)
           : names[0],
