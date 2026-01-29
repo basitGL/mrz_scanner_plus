@@ -10,8 +10,22 @@ class ImageCorrectnessChecker {
   });
 
   bool isImageBlurry(CameraImage image) {
-    final variance = laplacianVariance(image);
-    return variance < blurThreshold;
+    final v = laplacianVariance(image);
+    final luma = meanLuma(image);
+
+    // Darker -> lower expected variance -> reduce threshold
+    final adaptiveThreshold = _adaptiveBlurThreshold(luma);
+
+    return v < adaptiveThreshold;
+  }
+
+  double _adaptiveBlurThreshold(double luma) {
+    // luma is 0..255 typically.
+    // Tune these numbers, but this is a sane starting curve.
+    if (luma < 40) return 35; // very dark
+    if (luma < 70) return 55; // dark
+    if (luma < 110) return 80; // dim indoor
+    return 100; // normal
   }
 
   double laplacianVariance(CameraImage image) {
@@ -108,5 +122,25 @@ class ImageCorrectnessChecker {
 
     if (count < 2) return 0;
     return m2 / count;
+  }
+
+  double meanLuma(CameraImage image, {int step = 8}) {
+    final p = image.planes[0];
+    final bytes = p.bytes;
+    final w = image.width;
+    final h = image.height;
+    final stride = p.bytesPerRow;
+
+    int count = 0;
+    int sum = 0;
+
+    for (int y = 0; y < h; y += step) {
+      final row = y * stride;
+      for (int x = 0; x < w; x += step) {
+        sum += bytes[row + x];
+        count++;
+      }
+    }
+    return count == 0 ? 0 : sum / count;
   }
 }
