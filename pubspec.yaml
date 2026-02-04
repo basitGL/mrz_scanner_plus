@@ -17,7 +17,7 @@ dependencies:
   path: ^1.8.3
   intl: ^0.20.0
   characters: ^1.4.0
-  image: ^4.6.0
+  image: ^4.1.7
 
 dev_dependencies:
   flutter_test:

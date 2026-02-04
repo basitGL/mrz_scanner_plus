@@ -81,8 +81,6 @@ class _TD3MRZFormatParser {
     final expiryDate = MRZFieldParser.parseExpiryDate(expiryDateFixed);
     final optionalData = MRZFieldParser.parseOptionalData(optionalDataFixed);
 
-    final hasCountryCode = names[0].substring(0, 3) == countryCode;
-
     log("[passport] country code: $countryCode");
     log("[passport] firstname: ${names[0]}");
     final cc = calculateCountryCode(countryCode, names[0]);
