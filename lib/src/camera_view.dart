@@ -137,13 +137,13 @@ class _CameraViewState extends State<CameraView>
 
       try {
         final InputImage inputImage = _processImageForMlKit(image);
-        final blurry = checker.isImageBlurry(image);
-        if (blurry) {
-          if (widget.mode == CameraMode.scan && widget.onImageBlurry != null) {
-            widget.onImageBlurry!();
-          }
-          return;
-        }
+        // final blurry = checker.isImageBlurry(image);
+        // if (blurry) {
+        //   if (widget.mode == CameraMode.scan && widget.onImageBlurry != null) {
+        //     widget.onImageBlurry!();
+        //   }
+        //   return;
+        // }
         final recognizedText = await _textRecognizer.processImage(inputImage);
         widget.onDetected?.call(recognizedText.text);
         final mrzResult = Parser.parse(recognizedText.text);
