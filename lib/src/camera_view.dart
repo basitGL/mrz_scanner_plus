@@ -90,8 +90,9 @@ class _CameraViewState extends State<CameraView>
     final camera = cameras.first;
     _controller = CameraController(
       camera,
-      ResolutionPreset.max,
+      ResolutionPreset.high,
       enableAudio: false,
+      imageFormatGroup: ImageFormatGroup.bgra8888,
     );
 
     await _controller?.initialize();
@@ -151,7 +152,7 @@ class _CameraViewState extends State<CameraView>
         if (mrzResult.isUnAvailable()) return;
 
         if (_controller != null && _controller!.value.isInitialized) {
-          _controller?.stopImageStream();
+          await _controller?.stopImageStream();
           // final cropFile = await _takeAndCropImage();
           final mrzLines = MRZHelper.getMrzLines(recognizedText.text);
           dev.log(mrzLines.toString(), name: 'MRZ Lines:');
@@ -233,9 +234,9 @@ class _CameraViewState extends State<CameraView>
   }
 
   @override
-  void dispose() {
+  void dispose() async {
     if (_controller?.value.isStreamingImages ?? false) {
-      _controller?.stopImageStream();
+      await _controller?.stopImageStream();
     }
     _controller?.dispose();
     _textRecognizer.close();
